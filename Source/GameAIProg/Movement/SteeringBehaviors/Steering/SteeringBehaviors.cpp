@@ -26,3 +26,29 @@ SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	return Steering;
 }
+
+SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
+{
+	if(InitialAgentMaxSpeed <= 0) InitialAgentMaxSpeed = Agent.GetMaxLinearSpeed();
+	
+	SteeringOutput Steering{};
+	Steering.LinearVelocity = Target.Position - Agent.GetPosition();
+
+	FVector CenterPos(Agent.GetPosition().X, Agent.GetPosition().Y, 0);
+	FVector TargetPos(Target.Position.X, Target.Position.Y, 0);
+	float TargetDistance = FVector::Distance(CenterPos, TargetPos);
+	float SpeedDecrease = SlowRadius / TargetRadius;
+
+	if (TargetDistance < TargetRadius)
+		Agent.SetMaxLinearSpeed(0);
+	else if (TargetDistance < SlowRadius)
+		Agent.SetMaxLinearSpeed(Agent.GetMaxLinearSpeed() - SpeedDecrease);
+	else
+		Agent.SetMaxLinearSpeed(InitialAgentMaxSpeed);
+
+	// Debug Rendering 
+	DrawDebugCircle(Agent.GetWorld(), CenterPos, SlowRadius, 50, FColor::Blue, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+	DrawDebugCircle(Agent.GetWorld(), CenterPos, TargetRadius, 50, FColor::Orange, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+
+	return Steering;
+}
