@@ -107,3 +107,24 @@ SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	return Steering;
 }
+
+SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
+{
+	SteeringOutput Steering{};
+
+	FVector2D AgentPos = Agent.GetPosition();
+	FVector2D Forward = Target.Position;
+
+	FVector2D CircleCenter = AgentPos + Forward * WanderDistanceFromCenter;
+	float RandomOffset = FMath::FRandRange(-0.4f, 0.4f);
+	WanderAngle += RandomOffset;
+
+	FVector2D TargetOffset = FVector2D(FMath::Cos(WanderAngle), FMath::Sin(WanderAngle)) * WanderRadius;
+	FVector2D WanderTarget = CircleCenter + TargetOffset;
+
+	Steering.LinearVelocity = WanderTarget - AgentPos;
+
+	DrawDebugCircle(Agent.GetWorld(), FVector(CircleCenter.X, CircleCenter.Y, 0.f), WanderRadius, 50, FColor::Yellow, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+
+	return Steering;
+}
