@@ -30,6 +30,14 @@ void ASteeringAgent::Tick(float DeltaTime)
 	{
 		SteeringOutput output = SteeringBehavior->CalculateSteering(DeltaTime, *this);
 		AddMovementInput(FVector{output.LinearVelocity, 0.f});
+
+		if (!FMath::IsNearlyZero(output.AngularVelocity))
+		{
+			float NewYaw = GetActorRotation().Yaw +
+				(output.AngularVelocity * DeltaTime);
+
+			SetActorRotation(FRotator(0.f, NewYaw, 0.f));
+		}
 	}
 }
 

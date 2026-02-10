@@ -130,15 +130,23 @@ SteeringOutput Face::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
 	SteeringOutput Steering{};
 
-	FVector2D LinearVelocity = Target.Position - Agent.GetPosition();
+	FVector2D ToTarget = Target.Position - Agent.GetPosition();
 
-	float DesiredOrientation = FMath::Atan2(LinearVelocity.Y, LinearVelocity.X);
-	float CurrentOrientation = Agent.GetAngularVelocity();
+	float DesiredOrientation = FMath::RadiansToDegrees(FMath::Atan2(ToTarget.Y, ToTarget.X));
+
+	float CurrentOrientation = Agent.GetRotation();
 
 	float RotationDelta = DesiredOrientation - CurrentOrientation;
-	RotationDelta = FMath::UnwindRadians(RotationDelta);
+	RotationDelta = FMath::UnwindDegrees(RotationDelta);
 
-	Steering.AngularVelocity = RotationDelta;
+	float MaxAngularSpeed = Agent.GetMaxAngularSpeed();
+	Steering.AngularVelocity = FMath::Clamp(RotationDelta, -MaxAngularSpeed, MaxAngularSpeed);
+
+	// Debug Rendering
+	FVector2D CurrentVel2D = Target.Position;
+
+	// -- target circle
+	DrawDebugCircle(Agent.GetWorld(), FVector(CurrentVel2D.X, CurrentVel2D.Y, 0), 10, 50, FColor::Red, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
 	return Steering;
 }
