@@ -17,6 +17,10 @@ Flock::Flock(
 	Agents.SetNum(FlockSize);
 
  // TODO: initialize the flock and the memory pool
+#ifndef GAMEAI_USE_SPACE_PARTITIONING
+	Neighbors.SetNum(FlockSize);
+	NrOfNeighbors = 0;
+#endif
 }
 
 Flock::~Flock()
@@ -28,14 +32,25 @@ void Flock::Tick(float DeltaTime)
 {
  // TODO: update the flock
  // TODO: for every agent:
+	for (ASteeringAgent* pAgent : Agents)
+	{
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
+		RegisterNeighbors(pAgent);
+
   // TODO: update the agent (-> the steeringbehaviors use the neighbors in the memory pool)
+		pAgent->Tick(DeltaTime);
+
   // TODO: trim the agent to the world
+	}
 }
 
 void Flock::RenderDebug()
 {
  // TODO: Render all the agents in the flock
+	for (ASteeringAgent* pAgent : Agents)
+	{
+		//pAgent->RenderDebug();
+	}
 }
 
 void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
@@ -98,24 +113,55 @@ void Flock::RenderNeighborhood()
 void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 {
  // TODO: Implement
+	NrOfNeighbors = 0;
+	for (ASteeringAgent* pNeighbor : Agents)
+	{
+		// skip self
+		if (pNeighbor == pAgent) continue;
+		FVector2D agentPos = pAgent->GetPosition();
+		FVector2D neighborPos = pNeighbor->GetPosition();
+
+		float distSq = FVector2D::DistSquared(agentPos, neighborPos);
+		float radiusSq = NeighborhoodRadius * NeighborhoodRadius;
+
+		if (distSq <= radiusSq)
+		{
+			Neighbors[NrOfNeighbors] = pNeighbor;
+			NrOfNeighbors++;
+		}
+	}
 }
 #endif
 
 FVector2D Flock::GetAverageNeighborPos() const
 {
+	if (NrOfNeighbors == 0)
+		return FVector2D::ZeroVector;
+
 	FVector2D avgPosition = FVector2D::ZeroVector;
 
- // TODO: Implement
-	
+	for (int i = 0; i < NrOfNeighbors; ++i)
+	{
+		avgPosition += Neighbors[i]->GetPosition();
+	}
+
+	avgPosition /= NrOfNeighbors;
 	return avgPosition;
 }
 
 FVector2D Flock::GetAverageNeighborVelocity() const
 {
+	if (NrOfNeighbors == 0)
+		return FVector2D::ZeroVector;
+
 	FVector2D avgVelocity = FVector2D::ZeroVector;
 
- // TODO: Implement
+	for (int i = 0; i < NrOfNeighbors; ++i)
+	{
+		avgVelocity += Neighbors[i]->GetLinearVelocity();
+	}
 
+	avgVelocity /= NrOfNeighbors;
 	return avgVelocity;
 }
 
