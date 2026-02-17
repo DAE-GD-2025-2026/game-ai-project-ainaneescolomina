@@ -27,6 +27,9 @@ Flock::Flock(
 
 	pSeekBehavior = std::make_unique<Seek>();
 	pWanderBehavior = std::make_unique<Wander>();
+	
+	pEvadeBehavior = std::make_unique<Evade>();
+	pEvadeBehavior->SetEvadeRadius(300.f);
 
 	std::vector<BlendedSteering::WeightedBehavior> blendedBehaviors
 	{
@@ -37,7 +40,15 @@ Flock::Flock(
 	};
 
 	pBlendedSteering = std::make_unique<BlendedSteering>(blendedBehaviors);
-
+	
+	std::vector<ISteeringBehavior*> priorityBehaviors
+    {
+        pEvadeBehavior.get(),
+        pBlendedSteering.get()
+    };
+    
+    pPrioritySteering = std::make_unique<PrioritySteering>(priorityBehaviors);
+	
 	for (int i = 0; i < FlockSize; ++i)
 	{
 		if (!pWorld) continue;
@@ -57,7 +68,8 @@ Flock::Flock(
 		if (pAgent)
 		{
 			Agents[i] = pAgent;
-			pAgent->SetSteeringBehavior(pBlendedSteering.get());
+			//pAgent->SetSteeringBehavior(pBlendedSteering.get());
+			pAgent->SetSteeringBehavior(pPrioritySteering.get());
 		}
 	}
 }
@@ -74,10 +86,19 @@ Flock::~Flock()
 
 void Flock::Tick(float DeltaTime)
 {
+	if (pEvadeBehavior && pAgentToEvade)
+	{
+		FSteeringParams target;
+		target.Position = pAgentToEvade->GetPosition();
+		target.LinearVelocity = pAgentToEvade->GetLinearVelocity();
+
+		pEvadeBehavior->SetTarget(target);
+	}
+	
  // TODO: update the flock
- // TODO: for every agent:
 	for (ASteeringAgent* pAgent : Agents)
 	{
+ // TODO: for every agent:
 		if (!pAgent) continue;
 		
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)

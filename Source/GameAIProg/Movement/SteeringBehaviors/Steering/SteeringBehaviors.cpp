@@ -201,6 +201,18 @@ SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	FVector2D AgentPos = Agent.GetPosition();
 	FVector2D TargetPos = Target.Position;
+	
+	// -- Check if in evade radius (PrioritySteering)
+	if (EvadeRadius > 0.f)
+	{
+		float DistSq = FVector2D::DistSquared(AgentPos, TargetPos);
+		if (DistSq > EvadeRadius * EvadeRadius)
+		{
+			// Outside evade radius, do nothing
+			Steering.IsValid = false;
+			return Steering;
+		}
+	}
 
 	float Distance = FVector2D::Distance(AgentPos, TargetPos);
 

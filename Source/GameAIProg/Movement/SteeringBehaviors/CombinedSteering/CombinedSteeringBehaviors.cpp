@@ -29,11 +29,12 @@ SteeringOutput BlendedSteering::CalculateSteering(float DeltaT, ASteeringAgent& 
 		
 	// TODO: Calculate the weighted average steeringbehavior
 		BlendedSteering.LinearVelocity += steering.LinearVelocity * behavior.Weight;
-		BlendedSteering.LinearVelocity = BlendedSteering.LinearVelocity.GetClampedToMaxSize(Agent.GetMaxLinearSpeed());
 		BlendedSteering.AngularVelocity += steering.AngularVelocity * behavior.Weight;
 
 		BlendedSteering.IsValid = true;
 	}
+	
+	BlendedSteering.LinearVelocity = BlendedSteering.LinearVelocity.GetClampedToMaxSize(Agent.GetMaxLinearSpeed());
 	
 	// TODO: Add debug drawing
 

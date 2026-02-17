@@ -69,7 +69,7 @@ private:
 	std::unique_ptr<VelocityMatch> pVelMatchBehavior{};
 	std::unique_ptr<Seek> pSeekBehavior{};
 	std::unique_ptr<Wander> pWanderBehavior{};
-	//std::unique_ptr<Evade> pEvadeBehavior{};
+	std::unique_ptr<Evade> pEvadeBehavior{};
 	
 	std::unique_ptr<BlendedSteering> pBlendedSteering{};
 	std::unique_ptr<PrioritySteering> pPrioritySteering{};
@@ -78,7 +78,6 @@ private:
 	float CohesionWeight = 0.7f;
 	float VelocityMatchWeight = 0.6f;
 	float WanderWeight = 0.3f;
-
 
 	// UI and rendering
 	bool DebugRenderSteering{false};
