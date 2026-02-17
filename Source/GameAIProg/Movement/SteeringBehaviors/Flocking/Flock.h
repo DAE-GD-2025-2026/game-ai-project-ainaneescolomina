@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-// Toggle this define to enable/disable spatial partitioning
-// #define GAMEAI_USE_SPACE_PARTITIONING
+// Toggle toning
+// #define GAMEAI_USE_SPACE_PARTITIONINGhis define to enable/disable spatial partiti
 
 #include "FlockingSteeringBehaviors.h"
 #include "Movement/SteeringBehaviors/SteeringAgent.h"
@@ -64,15 +64,21 @@ private:
 	ASteeringAgent* pAgentToEvade{nullptr};
 	
 	//Steering Behaviors
-	//std::unique_ptr<Separation> pSeparationBehavior{};
-	//std::unique_ptr<Cohesion> pCohesionBehavior{};
-	//std::unique_ptr<VelocityMatch> pVelMatchBehavior{};
-	//std::unique_ptr<Seek> pSeekBehavior{};
-	//std::unique_ptr<Wander> pWanderBehavior{};
+	std::unique_ptr<Separation> pSeparationBehavior{};
+	std::unique_ptr<Cohesion> pCohesionBehavior{};
+	std::unique_ptr<VelocityMatch> pVelMatchBehavior{};
+	std::unique_ptr<Seek> pSeekBehavior{};
+	std::unique_ptr<Wander> pWanderBehavior{};
 	//std::unique_ptr<Evade> pEvadeBehavior{};
 	
 	std::unique_ptr<BlendedSteering> pBlendedSteering{};
 	std::unique_ptr<PrioritySteering> pPrioritySteering{};
+
+	float SeparationWeight = 1.0f;
+	float CohesionWeight = 0.7f;
+	float VelocityMatchWeight = 0.6f;
+	float WanderWeight = 0.3f;
+
 
 	// UI and rendering
 	bool DebugRenderSteering{false};

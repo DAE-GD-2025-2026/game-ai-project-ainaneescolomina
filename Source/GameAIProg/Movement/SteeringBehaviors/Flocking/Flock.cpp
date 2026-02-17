@@ -2,7 +2,6 @@
 #include "FlockingSteeringBehaviors.h"
 #include "Shared/ImGuiHelpers.h"
 
-
 Flock::Flock(
 	UWorld* pWorld,
 	TSubclassOf<ASteeringAgent> AgentClass,
@@ -21,11 +20,56 @@ Flock::Flock(
 	Neighbors.SetNum(FlockSize);
 	NrOfNeighbors = 0;
 #endif
+
+	pSeparationBehavior = std::make_unique<Separation>(this);
+	pCohesionBehavior = std::make_unique<Cohesion>(this);
+	pVelMatchBehavior = std::make_unique<VelocityMatch>(this);
+
+	pSeekBehavior = std::make_unique<Seek>();
+	pWanderBehavior = std::make_unique<Wander>();
+
+	std::vector<BlendedSteering::WeightedBehavior> blendedBehaviors
+	{
+		{ pSeparationBehavior.get(), 5.f },
+		{ pCohesionBehavior.get(),   0.f },
+		{ pVelMatchBehavior.get(),   0.f },
+		{ pWanderBehavior.get(),     0.f }
+	};
+
+	pBlendedSteering = std::make_unique<BlendedSteering>(blendedBehaviors);
+
+	for (int i = 0; i < FlockSize; ++i)
+	{
+		if (!pWorld) continue;
+
+		FVector SpawnLocation = FVector(
+			FMath::FRandRange(-WorldSize, WorldSize),
+			FMath::FRandRange(-WorldSize, WorldSize),
+			0.f);
+
+		FActorSpawnParameters SpawnParams;
+		ASteeringAgent* pAgent = pWorld->SpawnActor<ASteeringAgent>(
+			AgentClass,
+			SpawnLocation,
+			FRotator::ZeroRotator,
+			SpawnParams);
+
+		if (pAgent)
+		{
+			Agents[i] = pAgent;
+			pAgent->SetSteeringBehavior(pBlendedSteering.get());
+		}
+	}
 }
 
 Flock::~Flock()
 {
  // TODO: Cleanup any additional data
+	for (ASteeringAgent* pAgent : Agents)
+	{
+		if (pAgent)
+			pAgent->Destroy();
+	}
 }
 
 void Flock::Tick(float DeltaTime)
@@ -34,6 +78,8 @@ void Flock::Tick(float DeltaTime)
  // TODO: for every agent:
 	for (ASteeringAgent* pAgent : Agents)
 	{
+		if (!pAgent) continue;
+		
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
 		RegisterNeighbors(pAgent);
 
@@ -97,6 +143,42 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 		ImGui::Spacing();
 
   // TODO: implement ImGUI sliders for steering behavior weights here
+		if (float* weight = pBlendedSteering->GetWeight(pSeparationBehavior.get()))
+		{
+			float NewWeight = *weight;
+			if (ImGui::SliderFloat("Separation", &NewWeight, 0.f, 5.f))
+			{
+				*weight = NewWeight;
+			}
+		}
+
+		if (float* weight = pBlendedSteering->GetWeight(pCohesionBehavior.get()))
+		{
+			float NewWeight = *weight;
+			if (ImGui::SliderFloat("Cohesion", &NewWeight, 0.f, 5.f))
+			{
+				*weight = NewWeight;
+			}
+		}
+
+		if (float* weight = pBlendedSteering->GetWeight(pVelMatchBehavior.get()))
+		{
+			float NewWeight = *weight;
+			if (ImGui::SliderFloat("Alignment", &NewWeight, 0.f, 5.f))
+			{
+				*weight = NewWeight;
+			}
+		}
+
+		if (float* weight = pBlendedSteering->GetWeight(pWanderBehavior.get()))
+		{
+			float NewWeight = *weight;
+			if (ImGui::SliderFloat("Wander", &NewWeight, 0.f, 5.f))
+			{
+				*weight = NewWeight;
+			}
+		}
+		
 		//End
 		ImGui::End();
 	}
@@ -117,7 +199,9 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 	for (ASteeringAgent* pNeighbor : Agents)
 	{
 		// skip self
-		if (pNeighbor == pAgent) continue;
+		if (!pNeighbor || pNeighbor == pAgent)
+			continue;
+		
 		FVector2D agentPos = pAgent->GetPosition();
 		FVector2D neighborPos = pNeighbor->GetPosition();
 
@@ -168,5 +252,6 @@ FVector2D Flock::GetAverageNeighborVelocity() const
 void Flock::SetTarget_Seek(FSteeringParams const& Target)
 {
  // TODO: Implement
+	pSeekBehavior->SetTarget(Target);
 }
 
