@@ -114,9 +114,11 @@ void Flock::Tick(float DeltaTime)
 void Flock::RenderDebug()
 {
  // TODO: Render all the agents in the flock
+	
+	if (!DebugRenderSteering) return;
+	
 	for (ASteeringAgent* pAgent : Agents)
 	{
-		//pAgent->RenderDebug();
 	}
 }
 
@@ -161,6 +163,10 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
   // TODO: implement ImGUI checkboxes for debug rendering here
 
 		ImGui::Text("Behavior Weights");
+		ImGui::Spacing();
+		ImGui::Checkbox("DebugRenderSteering", &DebugRenderSteering);
+		ImGui::Checkbox("DebugRenderNeighborhood", &DebugRenderNeighborhood);
+		ImGui::Checkbox("DebugRenderPartitions", &DebugRenderPartitions);
 		ImGui::Spacing();
 
   // TODO: implement ImGUI sliders for steering behavior weights here
@@ -210,6 +216,8 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 void Flock::RenderNeighborhood()
 {
  // TODO: Debugrender the neighbors for the first agent in the flock
+	if (!DebugRenderNeighborhood) return;
+	//DrawDebugCircle(Agent.GetWorld(), Start, 40, 50, FColor::Yellow, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 }
 
 #ifndef GAMEAI_USE_SPACE_PARTITIONING

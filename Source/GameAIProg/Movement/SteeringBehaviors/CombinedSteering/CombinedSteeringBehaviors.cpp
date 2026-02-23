@@ -17,6 +17,7 @@ SteeringOutput BlendedSteering::CalculateSteering(float DeltaT, ASteeringAgent& 
 	for (const WeightedBehavior& behavior : WeightedBehaviors)
 	{
 		if (!behavior.pBehavior) continue;
+		if (behavior.Weight <= 0) continue;
 
 		SteeringOutput steering = behavior.pBehavior->CalculateSteering(DeltaT, Agent);
 

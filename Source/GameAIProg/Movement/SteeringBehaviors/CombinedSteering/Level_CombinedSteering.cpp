@@ -14,7 +14,25 @@ ALevel_CombinedSteering::ALevel_CombinedSteering()
 void ALevel_CombinedSteering::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	FVector SpawnLocaition = FVector::ZeroVector;
+	SteeringAgent = GetWorld()->SpawnActor<ASteeringAgent>(AgentClass, SpawnLocaition, FRotator::ZeroRotator);
+	
+	if (SteeringAgent)
+	{
+		pSeekBehavior = std::make_unique<Seek>();
+		pWanderBehavior = std::make_unique<Wander>();
+		
+		std::vector<BlendedSteering::WeightedBehavior> blendedBehaviors
+		{
+				{ pSeekBehavior.get(),   0.5f },
+				{ pWanderBehavior.get(),     0.5f }
+		};
+		
+		pBlendedSteering = std::make_unique<BlendedSteering>(blendedBehaviors);
+		
+		SteeringAgent->SetSteeringBehavior(pBlendedSteering.get());
+	}
 }
 
 void ALevel_CombinedSteering::BeginDestroy()
@@ -84,21 +102,44 @@ void ALevel_CombinedSteering::Tick(float DeltaTime)
 		ImGui::Text("Behavior Weights");
 		ImGui::Spacing();
 
+		if (pBlendedSteering)
+		{
+			ImGuiHelpers::ImGuiSliderFloatWithSetter("Seek",
+		pBlendedSteering->GetWeightedBehaviorsRef()[0].Weight, 0.f, 1.f,
+		[this](float InVal) { pBlendedSteering->GetWeightedBehaviorsRef()[0].Weight = InVal; }, "%.2f");
+				
+			ImGuiHelpers::ImGuiSliderFloatWithSetter("Wander",
+			pBlendedSteering->GetWeightedBehaviorsRef()[1].Weight, 0.f, 1.f,
+			[this](float InVal) { pBlendedSteering->GetWeightedBehaviorsRef()[1].Weight = InVal; }, "%.2f");
+			
+		}
 
-		// ImGuiHelpers::ImGuiSliderFloatWithSetter("Seek",
-		// 	pBlendedSteering->GetWeightedBehaviorsRef()[0].Weight, 0.f, 1.f,
-		// 	[this](float InVal) { pBlendedSteering->GetWeightedBehaviorsRef()[0].Weight = InVal; }, "%.2f");
-		//
-		// ImGuiHelpers::ImGuiSliderFloatWithSetter("Wander",
-		// pBlendedSteering->GetWeightedBehaviorsRef()[1].Weight, 0.f, 1.f,
-		// [this](float InVal) { pBlendedSteering->GetWeightedBehaviorsRef()[1].Weight = InVal; }, "%.2f");
-	
 		//End
 		ImGui::End();
 	}
 #pragma endregion
 	
 	// Combined Steering Update
- // TODO: implement handling mouse click input for seek
  // TODO: implement Make sure to also evade the wanderer
+	
+	if (SteeringAgent)
+	{
+		APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+		
+		if (PlayerController && PlayerController->IsInputKeyDown(EKeys::LeftMouseButton))
+		{
+			UseMouseTarget = true;
+		}
+
+ // TODO: implement handling mouse click input for seek	
+		if (UseMouseTarget && pSeekBehavior)
+		{
+			pSeekBehavior->SetTarget(MouseTarget);
+		}
+		
+		if (CanDebugRender)
+		{
+			DrawDebugCircle(GetWorld(), SteeringAgent->GetActorLocation(), 40, 50, FColor::Yellow, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+		}
+	}
 }

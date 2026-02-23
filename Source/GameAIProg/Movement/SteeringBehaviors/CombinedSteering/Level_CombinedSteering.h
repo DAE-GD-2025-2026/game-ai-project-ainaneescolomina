@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "CoreMinimal.h"
 #include "CombinedSteeringBehaviors.h"
 #include "GameAIProg/Shared/Level_Base.h"
@@ -16,8 +18,10 @@ class GAMEAIPROG_API ALevel_CombinedSteering : public ALevel_Base
 
 public:
 	// Sets default values for this actor's properties
+	UPROPERTY(EditAnywhere, Category= "AI")
+	TSubclassOf<ASteeringAgent> AgentClass;
 	ALevel_CombinedSteering();
-
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -31,6 +35,10 @@ private:
 	//Datamembers
 	bool UseMouseTarget = false;
 	bool CanDebugRender = false;
-
 	
+	ASteeringAgent *SteeringAgent{};
+
+	std::unique_ptr<BlendedSteering> pBlendedSteering{};
+	std::unique_ptr<Seek> pSeekBehavior{};
+	std::unique_ptr<Wander> pWanderBehavior{};
 };
