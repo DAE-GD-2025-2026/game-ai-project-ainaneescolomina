@@ -1,6 +1,7 @@
 #include "Flock.h"
 #include "FlockingSteeringBehaviors.h"
 #include "Shared/ImGuiHelpers.h"
+#include "../SpacePartitioning/SpacePartitioning.h"
 
 Flock::Flock(
 	UWorld* pWorld,
@@ -20,6 +21,19 @@ Flock::Flock(
 	Neighbors.SetNum(FlockSize);
 	NrOfNeighbors = 0;
 #endif
+	
+	// Create CellSpace
+	int rows = 10;
+	int cols = 10;
+
+	pCellSpace = new CellSpace(
+		pWorld,
+		WorldSize * 2.f,
+		WorldSize * 2.f,
+		rows,
+		cols,
+		FlockSize
+	);
 
 	pSeparationBehavior = std::make_unique<Separation>(this);
 	pCohesionBehavior = std::make_unique<Cohesion>(this);
@@ -70,6 +84,11 @@ Flock::Flock(
 			Agents[i] = pAgent;
 			//pAgent->SetSteeringBehavior(pBlendedSteering.get());
 			pAgent->SetSteeringBehavior(pPrioritySteering.get());
+			
+			if (pCellSpace)
+			{
+				pCellSpace->AddAgent(*pAgent);
+			}
 		}
 	}
 }
@@ -81,6 +100,12 @@ Flock::~Flock()
 	{
 		if (pAgent)
 			pAgent->Destroy();
+	}
+	
+	if (pCellSpace)
+	{
+		delete pCellSpace;
+		pCellSpace = nullptr;
 	}
 }
 
@@ -102,11 +127,24 @@ void Flock::Tick(float DeltaTime)
 		if (!pAgent) continue;
 		
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
-		RegisterNeighbors(pAgent);
-
+		if (bUseSpacePartitioning && pCellSpace)
+		{
+			pCellSpace->RegisterNeighbors(*pAgent, NeighborhoodRadius);
+		}
+		else
+		{
+			RegisterNeighbors(pAgent);
+		}
+		
   // TODO: update the agent (-> the steeringbehaviors use the neighbors in the memory pool)
+		FVector2D oldPos = pAgent->GetPosition();
 		pAgent->Tick(DeltaTime);
 
+		if (bUseSpacePartitioning && pCellSpace)
+		{
+			pCellSpace->UpdateAgentCell(*pAgent, oldPos);
+		}
+		
   // TODO: trim the agent to the world
 	}
 }
@@ -117,8 +155,9 @@ void Flock::RenderDebug()
 	
 	if (!DebugRenderSteering) return;
 	
-	for (ASteeringAgent* pAgent : Agents)
+	if (DebugRenderPartitions && bUseSpacePartitioning && pCellSpace)
 	{
+		pCellSpace->RenderCells();
 	}
 }
 
@@ -168,7 +207,28 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 		ImGui::Checkbox("DebugRenderNeighborhood", &DebugRenderNeighborhood);
 		ImGui::Checkbox("DebugRenderPartitions", &DebugRenderPartitions);
 		ImGui::Spacing();
+		
+		ImGui::Separator();
+		ImGui::Text("Modes");
+		ImGui::Spacing();
 
+		ImGui::Checkbox("Use Spatial Partitioning", &bUseSpacePartitioning);
+
+		if (ImGui::Checkbox("Use Priority Steering", &bUsePrioritySteering))
+		{
+			for (ASteeringAgent* pAgent : Agents)
+			{
+				if (!pAgent) continue;
+
+				if (bUsePrioritySteering)
+					pAgent->SetSteeringBehavior(pPrioritySteering.get());
+				else
+					pAgent->SetSteeringBehavior(pBlendedSteering.get());
+			}
+		}
+
+		ImGui::Spacing();
+		
   // TODO: implement ImGUI sliders for steering behavior weights here
 		if (float* weight = pBlendedSteering->GetWeight(pSeparationBehavior.get()))
 		{

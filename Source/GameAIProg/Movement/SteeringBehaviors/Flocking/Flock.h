@@ -9,9 +9,7 @@
 #include "Movement/SteeringBehaviors/CombinedSteering/CombinedSteeringBehaviors.h"
 #include <memory>
 #include "imgui.h"
-#ifdef GAMEAI_USE_SPACE_PARTITIONING
-#include "../SpacePartitioning/SpacePartitioning.h"
-#endif
+class CellSpace;
 
 class Flock final
 {
@@ -31,8 +29,8 @@ public:
 	void ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize);
 
 #ifdef GAMEAI_USE_SPACE_PARTITIONING
-	//const TArray<ASteeringAgent*>& GetNeighbors() const { return pPartitionedSpace->GetNeighbors(); }
-	//int GetNrOfNeighbors() const { return pPartitionedSpace->GetNrOfNeighbors(); }
+	const TArray<ASteeringAgent*>& GetNeighbors() const { return pCellSpace->GetNeighbors(); }
+	int GetNrOfNeighbors() const { return pCellSpace->GetNrOfNeighbors(); }
 #else // No space partitioning
 	void RegisterNeighbors(ASteeringAgent* const Agent);
 	int GetNrOfNeighbors() const { return NrOfNeighbors; }
@@ -83,6 +81,13 @@ private:
 	bool DebugRenderSteering{false};
 	bool DebugRenderNeighborhood{true};
 	bool DebugRenderPartitions{true};
+	
+	// Runtime toggles
+	bool bUseSpacePartitioning{ true };
+	bool bUsePrioritySteering{ false };
 
+	// Spatial partitioning
+	CellSpace* pCellSpace{ nullptr };
+	
 	void RenderNeighborhood();
 };
