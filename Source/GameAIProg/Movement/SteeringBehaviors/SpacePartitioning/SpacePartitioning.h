@@ -61,6 +61,9 @@ private:
 
 	float CellWidth;
 	float CellHeight;
+	
+	float OriginX{};
+	float OriginY{};
 
 	// Members to avoid memory allocation on every frame
 	TArray<ASteeringAgent*> Neighbors;
