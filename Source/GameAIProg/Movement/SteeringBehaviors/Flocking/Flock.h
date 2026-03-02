@@ -1,7 +1,8 @@
 ﻿#pragma once
 
 // Toggle toning
-// #define GAMEAI_USE_SPACE_PARTITIONINGhis define to enable/disable spatial partiti
+// this define to enable/disable spatial partiti
+ //#define GAMEAI_USE_SPACE_PARTITIONING
 
 #include "FlockingSteeringBehaviors.h"
 #include "Movement/SteeringBehaviors/SteeringAgent.h"
@@ -18,7 +19,7 @@ public:
 	UWorld* pWorld,
 	TSubclassOf<ASteeringAgent> AgentClass,
 	int FlockSize = 10, 
-	float WorldSize = 100.f, 
+	float WorldSize = 100.f,
 	ASteeringAgent* const pAgentToEvade = nullptr, 
 	bool bTrimWorld = false);
 
@@ -49,16 +50,15 @@ private:
 	int FlockSize{0};
 	TArray<ASteeringAgent*> Agents{};
 #ifdef GAMEAI_USE_SPACE_PARTITIONING
-	//std::unique_ptr<CellSpace> pPartitionedSpace{};
-	//int NrOfCellsX{ 10 };
-	//TArray<FVector2D> OldPositions{};
+	std::unique_ptr<CellSpace> pPartitionedSpace{};
+	int NrOfCellsX{ 10 };
+	TArray<FVector2D> OldPositions{};
 #else // No space partitioning
 	TArray<ASteeringAgent*> Neighbors{};
 #endif // USE_SPACE_PARTITIONING
 	
 	float NeighborhoodRadius{200.f};
 	int NrOfNeighbors{0};
-
 	ASteeringAgent* pAgentToEvade{nullptr};
 	
 	//Steering Behaviors
@@ -78,13 +78,13 @@ private:
 	float WanderWeight = 0.3f;
 
 	// UI and rendering
-	bool DebugRenderSteering{false};
-	bool DebugRenderNeighborhood{true};
+	bool DebugRenderSteering{true};
+	bool DebugRenderNeighborhood{false};
 	bool DebugRenderPartitions{true};
 	
 	// Runtime toggles
 	bool bUseSpacePartitioning{ true };
-	bool bUsePrioritySteering{ false };
+	//bool bUsePrioritySteering{ false };
 
 	// Spatial partitioning
 	CellSpace* pCellSpace{ nullptr };
