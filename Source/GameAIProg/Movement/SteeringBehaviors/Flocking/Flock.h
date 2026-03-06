@@ -2,18 +2,23 @@
 
 // Toggle toning
 // this define to enable/disable spatial partiti
- //#define GAMEAI_USE_SPACE_PARTITIONING
+#define GAMEAI_USE_SPACE_PARTITIONING
 
 #include "FlockingSteeringBehaviors.h"
 #include "Movement/SteeringBehaviors/SteeringAgent.h"
 #include "Movement/SteeringBehaviors/SteeringHelpers.h"
 #include "Movement/SteeringBehaviors/CombinedSteering/CombinedSteeringBehaviors.h"
+#include "../SpacePartitioning/SpacePartitioning.h"
 #include <memory>
 #include "imgui.h"
 class CellSpace;
 
 class Flock final
 {
+private:
+	// Spatial partitioning
+	CellSpace* pCellSpace{ nullptr };
+	
 public:
 	Flock(
 	UWorld* pWorld,
@@ -85,9 +90,6 @@ private:
 	// Runtime toggles
 	bool bUseSpacePartitioning{ true };
 	//bool bUsePrioritySteering{ false };
-
-	// Spatial partitioning
-	CellSpace* pCellSpace{ nullptr };
 	
 	void RenderNeighborhood();
 };

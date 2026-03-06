@@ -1,7 +1,6 @@
 #include "Flock.h"
 #include "FlockingSteeringBehaviors.h"
 #include "Shared/ImGuiHelpers.h"
-#include "../SpacePartitioning/SpacePartitioning.h"
 
 Flock::Flock(
 	UWorld* pWorld,
@@ -64,7 +63,7 @@ Flock::Flock(
     
     pPrioritySteering = std::make_unique<PrioritySteering>(priorityBehaviors);
 	
-	pAgentToEvade->SetSteeringBehavior(pPrioritySteering.get());
+	pAgentToEvade->SetSteeringBehavior(pWanderBehavior.get());
 	
 	for (int i = 0; i < FlockSize; ++i)
 	{
@@ -133,25 +132,24 @@ void Flock::Tick(float DeltaTime)
 		if (!pAgent) continue;
 		
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
+		
+#ifdef GAMEAI_USE_SPACE_PARTITIONING
 		if (bUseSpacePartitioning && pCellSpace)
 		{
 			pCellSpace->RegisterNeighbors(*pAgent, NeighborhoodRadius);
 		}
-		else
-		{
-			RegisterNeighbors(pAgent);
-		}
+#else // No space partitioning
+		RegisterNeighbors(pAgent);
+#endif
 		
   // TODO: update the agent (-> the steeringbehaviors use the neighbors in the memory pool)
-		FVector2D oldPos = pAgent->GetPosition();
+		FVector2D oldPos = pAgent->GetPreviousPosition();
 		pAgent->Tick(DeltaTime);
 
 		if (bUseSpacePartitioning && pCellSpace)
 		{
 			pCellSpace->UpdateAgentCell(*pAgent, oldPos);
 		}
-		
-  // TODO: trim the agent to the world
 	}
 }
 
@@ -299,27 +297,29 @@ void Flock::RenderNeighborhood()
  // TODO: Debugrender the neighbors for the first agent in the flock
 	if (Agents.Num() == 0 || Agents[0] == nullptr) 
 		return;
-
+	
+	int nrNeighbors{};
+	const TArray<ASteeringAgent*>& neighbors = pCellSpace->GetNeighbors();
+	
+#ifdef GAMEAI_USE_SPACE_PARTITIONING
 	if (bUseSpacePartitioning && pCellSpace)
+	{
 		pCellSpace->RegisterNeighbors(*Agents[0], NeighborhoodRadius);
-	else
-		RegisterNeighbors(Agents[0]);
-
-	int nrNeighbors = bUseSpacePartitioning
-		? pCellSpace->GetNrOfNeighbors()
-		: NrOfNeighbors;
-
-	const TArray<ASteeringAgent*>& neighbors = bUseSpacePartitioning
-		? pCellSpace->GetNeighbors()
-		: Neighbors;
+		nrNeighbors = pCellSpace->GetNrOfNeighbors();
+	}
+#else // No space partitioning
+	RegisterNeighbors(Agents[0]);
+	nrNeighbors = NrOfNeighbors;
+	neighbors = Neighbors;
+#endif
 
 	
 	FVector2D agentPos = Agents[0]->GetPosition();
 	DrawDebugCircle(pWorld, FVector(agentPos.X, agentPos.Y, 0), 40, 50, FColor::Magenta, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 	
-	for (int i = 0; i < NrOfNeighbors; ++i)
+	for (int i = 0; i < nrNeighbors; ++i)
 	{
-		FVector2D neighborPos = Neighbors[i]->GetPosition();
+		FVector2D neighborPos = neighbors[i]->GetPosition();
 		DrawDebugCircle(pWorld, FVector(neighborPos.X, neighborPos.Y, 0), 40, 50, FColor::Emerald, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 	}	
 }
@@ -353,7 +353,12 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 FVector2D Flock::GetAverageNeighborPos() const
 {
 	int nrNeighbors = NrOfNeighbors;
-	auto neighbors = Neighbors;
+	auto neighbors = pCellSpace->GetNeighbors();;
+	
+#ifdef GAMEAI_USE_SPACE_PARTITIONING
+#else // No space partitioning
+	neighbors = Neighbors;
+#endif
 	
 	// NrOfNeighbours it's not updated when using space partitioning
 	if (bUseSpacePartitioning)
@@ -378,17 +383,32 @@ FVector2D Flock::GetAverageNeighborPos() const
 
 FVector2D Flock::GetAverageNeighborVelocity() const
 {
-	if (NrOfNeighbors == 0)
+	int nrNeighbors = NrOfNeighbors;
+	auto neighbors = pCellSpace->GetNeighbors();;
+	
+#ifdef GAMEAI_USE_SPACE_PARTITIONING
+#else // No space partitioning
+	neighbors = Neighbors;
+#endif
+	
+	if (bUseSpacePartitioning)
+	{
+		nrNeighbors = pCellSpace->GetNrOfNeighbors();
+		neighbors = pCellSpace->GetNeighbors();
+	}
+
+	if (nrNeighbors == 0)
 		return FVector2D::ZeroVector;
 
 	FVector2D avgVelocity = FVector2D::ZeroVector;
 
-	for (int i = 0; i < NrOfNeighbors; ++i)
+	for (int i = 0; i < nrNeighbors; ++i)
 	{
-		avgVelocity += Neighbors[i]->GetLinearVelocity();
+		avgVelocity += neighbors[i]->GetLinearVelocity();
 	}
 
-	avgVelocity /= NrOfNeighbors;
+	avgVelocity /= nrNeighbors;
+
 	return avgVelocity;
 }
 

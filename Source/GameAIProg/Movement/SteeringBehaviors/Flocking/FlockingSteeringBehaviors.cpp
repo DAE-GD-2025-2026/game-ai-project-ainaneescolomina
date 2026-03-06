@@ -27,7 +27,7 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
     {
         ASteeringAgent* pNeighbor = pFlock->GetNeighbors()[i];
         FVector2D flee = pAgent.GetPosition() - pNeighbor->GetPosition();
-        float distance = flee.Length();
+        float distance = flee.SizeSquared();
 
         if (distance > 0.001f)
         {
@@ -37,7 +37,14 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
         }
     }
 
-    Steering.LinearVelocity = LinearVelocity;
+    
+	Steering.LinearVelocity = LinearVelocity;
+	
+	if (!LinearVelocity.IsNearlyZero())
+	{
+		int a = 10;
+	}
+	
     return Steering;
 }
 

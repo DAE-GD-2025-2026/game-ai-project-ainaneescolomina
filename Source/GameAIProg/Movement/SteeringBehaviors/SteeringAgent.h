@@ -70,4 +70,8 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	void SetSteeringBehavior(ISteeringBehavior* NewSteeringBehavior);
+	
+	FVector2D GetPreviousPosition() const { return PreviousPosition; }
+private:
+	FVector2D PreviousPosition;
 };

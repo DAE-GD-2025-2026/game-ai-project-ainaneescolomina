@@ -26,6 +26,8 @@ void ASteeringAgent::BeginDestroy()
 // Called every frame
 void ASteeringAgent::Tick(float DeltaTime)
 {
+	PreviousPosition = GetPosition();
+	
 	Super::Tick(DeltaTime);
 
 	if (SteeringBehavior)
