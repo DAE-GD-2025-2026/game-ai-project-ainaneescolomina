@@ -81,17 +81,17 @@ void CellSpace::UpdateAgentCell(ASteeringAgent& Agent, const FVector2D& OldPos)
 void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius)
 {
 	// TODO Register the neighbors for the provided agent
-	// TODO Only check the cells that are within the radius of the neighborhood
 	NrOfNeighbors = 0;
 	FVector2D pos = Agent.GetPosition();
 
-	FRect queryRect;
-	queryRect.Min = { pos.X - QueryRadius, pos.Y - QueryRadius };
-	queryRect.Max = { pos.X + QueryRadius, pos.Y + QueryRadius };
+	FRect radiusRect;
+	radiusRect.Min = { pos.X - QueryRadius, pos.Y - QueryRadius };
+	radiusRect.Max = { pos.X + QueryRadius, pos.Y + QueryRadius };
 	
 	for (Cell& cell : Cells)
 	{
-		if (!DoRectsOverlap(cell.BoundingBox, queryRect))
+	// TODO Only check the cells that are within the radius of the neighborhood
+		if (!DoRectsOverlap(cell.BoundingBox, radiusRect))
 			continue;
 		
 		for (ASteeringAgent* pNeighbor : cell.Agents)
@@ -132,7 +132,6 @@ void CellSpace::RenderCells() const
 			FVector start(points[i], 0.f);
 			FVector end(points[(i + 1) % points.size()], 0.f);
 
-			// Change to debug box
 			DrawDebugLine(pWorld,start,end,FColor::Green,false,-1.f,0,4.f);
 		}
 
@@ -165,10 +164,8 @@ int CellSpace::PositionToIndex(FVector2D const & Pos) const
 
 bool CellSpace::DoRectsOverlap(FRect const & RectA, FRect const & RectB)
 {
-	// Check if the rectangles are separated on either axis
 	if (RectA.Max.X < RectB.Min.X || RectA.Min.X > RectB.Max.X) return false;
 	if (RectA.Max.Y < RectB.Min.Y || RectA.Min.Y > RectB.Max.Y) return false;
     
-	// If they are not separated, they must overlap
 	return true;
 }

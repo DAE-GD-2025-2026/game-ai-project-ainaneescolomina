@@ -298,30 +298,32 @@ void Flock::RenderNeighborhood()
 	if (Agents.Num() == 0 || Agents[0] == nullptr) 
 		return;
 	
-	int nrNeighbors{};
-	const TArray<ASteeringAgent*>& neighbors = pCellSpace->GetNeighbors();
+	FVector2D agentPos = Agents[0]->GetPosition();
+	DrawDebugCircle(pWorld, FVector(agentPos.X, agentPos.Y, 0), 40, 50, FColor::Magenta, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 	
 #ifdef GAMEAI_USE_SPACE_PARTITIONING
 	if (bUseSpacePartitioning && pCellSpace)
 	{
 		pCellSpace->RegisterNeighbors(*Agents[0], NeighborhoodRadius);
-		nrNeighbors = pCellSpace->GetNrOfNeighbors();
+		int nrNeighbors = pCellSpace->GetNrOfNeighbors();
+		const TArray<ASteeringAgent*>& neighbors = pCellSpace->GetNeighbors();
+
+		for (int i = 0; i < nrNeighbors; ++i)
+		{
+			FVector2D neighborPos = neighbors[i]->GetPosition();
+			DrawDebugCircle(pWorld, FVector(neighborPos.X, neighborPos.Y, 0), 40, 50, FColor::Emerald, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+		}
 	}
 #else // No space partitioning
 	RegisterNeighbors(Agents[0]);
-	nrNeighbors = NrOfNeighbors;
-	neighbors = Neighbors;
-#endif
-
-	
-	FVector2D agentPos = Agents[0]->GetPosition();
-	DrawDebugCircle(pWorld, FVector(agentPos.X, agentPos.Y, 0), 40, 50, FColor::Magenta, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-	
-	for (int i = 0; i < nrNeighbors; ++i)
+	for (int i = 0; i < NrOfNeighbors; ++i)
 	{
-		FVector2D neighborPos = neighbors[i]->GetPosition();
+		FVector2D neighborPos = Neighbors[i]->GetPosition();
 		DrawDebugCircle(pWorld, FVector(neighborPos.X, neighborPos.Y, 0), 40, 50, FColor::Emerald, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-	}	
+	}
+#endif
+	
+	
 }
 
 #ifndef GAMEAI_USE_SPACE_PARTITIONING
