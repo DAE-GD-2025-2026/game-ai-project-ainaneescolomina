@@ -5,7 +5,7 @@ PathFollow::PathFollow()
 {
 	pSeek = new Seek();
 	pArrive = new Arrive();
-	pArrive->SetTargetRadius(10.0f);
+	pArrive->SetTargetRadius(1.0f, 4.0f);
 }
 
 PathFollow::~PathFollow()

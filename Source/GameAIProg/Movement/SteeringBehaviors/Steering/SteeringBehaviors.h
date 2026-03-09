@@ -55,7 +55,7 @@ public:
 
 	// steering
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
-	void SetTargetRadius(float targetRadius){ TargetRadius = targetRadius; }
+	void SetTargetRadius(float targetRadius, float slowRadius = -1){ TargetRadius = targetRadius; if (slowRadius > 0) SlowRadius = slowRadius; }
 
 private:
 	float SlowRadius{500};
