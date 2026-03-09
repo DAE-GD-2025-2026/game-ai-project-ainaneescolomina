@@ -44,4 +44,7 @@ private:
 	UGraphEditorComponent* PlayerGraphEditor{}; // ref
 	
 	void UpdateAgentPath( std::vector<GameAI::Node*> const & Trail);
+	
+	// Test
+	bool firstFrame{true};
 };
