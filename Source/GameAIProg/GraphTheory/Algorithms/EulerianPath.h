@@ -56,11 +56,60 @@ namespace GameAI
 		int currentNodeId{ Graphs::InvalidNodeId };
 		
 		// TODO Check if there can be an Euler path
-		// TODO If this graph is not eulerian, return the empty path
+		int oddDegree = 0;
+		for (int i = 0; i < Nodes.size(); ++i)
+		{
+			int degree = graphCopy.FindConnectionsFrom(i).size();
+			if (degree % 2 != 0)
+			{
+				oddDegree++;
+				//if (currentNodeId == Graphs::InvalidNodeId) currentNodeId = i;
+				currentNodeId = i;
+			}
+		}
+		
+		if (oddDegree == 0)
+		{
+			eulerianity = Eulerianity::eulerian;
+			currentNodeId = 0;
+		}
+		else if (oddDegree == 2)
+		{
+			eulerianity = Eulerianity::semiEulerian;
+		}
+		else
+		{
+			// TODO If this graph is not eulerian, return the empty path
+			eulerianity = Eulerianity::notEulerian;
+			return Path;
+		}
 		
 		// TODO Start algorithm loop
 		std::stack<int> nodeStack;
+		
+		while (!nodeStack.empty() || graphCopy.FindConnectionsFrom(currentNodeId).size() > 0)
+		{
+			auto connections = graphCopy.FindConnectionsFrom(currentNodeId);
 
+			if (connections.size() > 0)
+			{
+				nodeStack.push(currentNodeId);
+				int nextNode = connections[0]->GetToId();
+				graphCopy.RemoveConnection(currentNodeId, nextNode);
+
+				currentNodeId = nextNode;
+			}
+			else
+			{
+				Path.push_back(m_pGraph->GetNode(currentNodeId).get());
+				currentNodeId = nodeStack.top();
+				nodeStack.pop();
+			}
+			
+		}
+		
+		Path.push_back(m_pGraph->GetNode(currentNodeId).get());
+		
 		std::reverse(Path.begin(), Path.end());
 		return Path;
 	}
@@ -68,10 +117,20 @@ namespace GameAI
 	inline void EulerianPath::VisitAllNodesDFS(const std::vector<Node*>& Nodes, std::vector<bool>& visited, int startIndex ) const
 	{
 		// TODO Mark the visited node
-
+		visited[startIndex] = true;
+		
 		// TODO Ask the graph for the connections from that node
+		auto connections = m_pGraph->FindConnectionsFrom(startIndex);
+		
 		// TODO recursively visit any valid connected nodes that were not visited before
 		// TODO Tip: use an index-based for-loop to find the correct index
+		for (int i = 0; i < connections.size(); ++i)
+		{
+			int nodeId = connections[i]->GetToId();
+
+			if (!visited[nodeId])
+				VisitAllNodesDFS(Nodes, visited, nodeId);
+		}	
 	}
 
 	inline bool EulerianPath::IsConnected() const
@@ -81,9 +140,29 @@ namespace GameAI
 			return false;
 
 		// TODO choose a starting node
+		std::vector<bool> visitedNodes(Nodes.size(), false);
+		int startingNode = -1;
+
+		for (int i = 0; i < Nodes.size(); ++i)
+		{
+			if (!m_pGraph->FindConnectionsFrom(i).empty())
+			{
+				startingNode = i;
+				break;
+			}
+		}
+
+		if (startingNode == -1) return true;
 		
 		// TODO start a depth-first-search traversal from the node that has at least one connection
+		VisitAllNodesDFS(Nodes, visitedNodes, startingNode );
 		
 		// TODO if a node was never visited, this graph is not connected
+		for (bool visitedNode : visitedNodes)
+		{
+			if (!visitedNode) return false;
+		}
+		
+		return true;
 	}
 }
