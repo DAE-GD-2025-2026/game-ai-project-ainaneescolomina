@@ -124,7 +124,7 @@ void ALevel_CombinedSteering::Tick(float DeltaTime)
 	
 	if (SteeringAgent)
 	{
-		APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+		PlayerController = GetWorld()->GetFirstPlayerController();
 		
 		if (PlayerController && PlayerController->IsInputKeyDown(EKeys::LeftMouseButton))
 		{
