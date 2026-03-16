@@ -17,16 +17,17 @@ BFS::BFS(Graph* const pGraph)
 std::vector<Node*> BFS::FindPath(Node* const pStartNode, Node* const pDestinationNode) const
 {
 	std::vector<Node*> path;
-	std::queue<Node*> queue[pStartNode];
+	std::queue<Node*> queue;
+	queue.push(pStartNode);
 	std::set<Node*> visited;
 	std::map<Node*, Node*> parent;
 	
 	visited.insert(pStartNode);
 
-	while (!queue->empty())
+	while (!queue.empty())
 	{
-		Node* node = queue->front();
-		queue->pop();
+		Node* node = queue.front();
+		queue.pop();
 		
 		if (node == pDestinationNode)
 		{
@@ -43,7 +44,7 @@ std::vector<Node*> BFS::FindPath(Node* const pStartNode, Node* const pDestinatio
 			{
 				visited.insert(neighbor);
 				parent[neighbor] = node;
-				queue->push(neighbor);
+				queue.push(neighbor);
 			}
 		}
 	}
