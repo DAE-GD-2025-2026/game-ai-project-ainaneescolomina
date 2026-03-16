@@ -19,6 +19,7 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 	NodeRecord startRecord{};
 	startRecord.pNode = pStartNode;
 	startRecord.pConnection = nullptr;
+	startRecord.costSoFar = 0.f;
 	startRecord.estimatedTotalCost = GetHeuristicCost(pStartNode, pGoalNode);
 
 	openList.push_back(startRecord);
@@ -29,10 +30,14 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 		// A. Get record from the open list with lowest F-score
 		auto currentRecord = std::min_element(openList.begin(), openList.end());
 		currentNodeRecord = *currentRecord;
+		openList.erase(currentRecord);
 
 		// B. Check if that record refers to the end node
-		if (currentNodeRecord.pNode == pGoalNode) 
+		if (currentNodeRecord.pNode == pGoalNode)
+		{
+			closedList.push_back(currentNodeRecord);
 			break;
+		}
 
 		// C. Else, we get all the connections of the NodeRecord’s node
 		auto connections = pGraph->FindConnectionsFrom(currentNodeRecord.pNode->GetId());
@@ -75,11 +80,11 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 		}
 		
 		// G. remove the currentNodeRecord from the openList and add it to the closedList
+		openList.erase(std::remove(openList.begin(), openList.end(), currentNodeRecord), openList.end()); // remove from openList correctly
 		closedList.push_back(currentNodeRecord);
-		openList.erase(currentRecord); // remove from openList correctly
 	}
 	
-	// 3. Backtracking
+	// 3. Backtracking	
 	if (currentNodeRecord.pNode == pGoalNode)
 	{
 		NodeRecord* record = &currentNodeRecord;
@@ -97,13 +102,12 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 			if (it != closedList.end())
 				record = &(*it);
 			else
-				record = nullptr;
+				break;
 		}
-
-		if (record != nullptr)
-			path.push_back(record->pNode);
-		std::reverse(path.begin(), path.end());
 	}
+	
+	path.push_back(startRecord.pNode);
+	std::reverse(path.begin(), path.end());
 	
 	return path;
 }
