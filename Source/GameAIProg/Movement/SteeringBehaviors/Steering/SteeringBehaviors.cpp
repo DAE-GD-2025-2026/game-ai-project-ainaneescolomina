@@ -14,6 +14,7 @@ SteeringOutput Seek::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 	//Steering.LinearVelocity.Normalize(); --> Already automatically normalized by AssMovementInput
 
 	// Debug Rendering
+	/*
 	const float DebugScale = 0.4f;
 	UWorld* World = Agent.GetWorld();
 
@@ -21,6 +22,7 @@ SteeringOutput Seek::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 	FVector2D CurrentVel2D = Target.Position;
 	FVector SteeringVel = Agent.GetVelocity();
 	FVector2D DesiredVel2D = LinearVelocity;
+
 
 	// -- current velocity
 	DrawDebugLine(World, Start, Start + FVector(CurrentVel2D.X, CurrentVel2D.Y, 0) * DebugScale, FColor::Magenta, false, -1, 0, 5);
@@ -36,7 +38,7 @@ SteeringOutput Seek::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	// -- area circle
 	DrawDebugCircle(Agent.GetWorld(), Start, 40, 50, FColor::Yellow, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-
+	*/
 	return Steering;
 }
 
@@ -48,6 +50,7 @@ SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 	Steering.LinearVelocity = LinearVelocity;
 
 	// Debug Rendering
+	/*
 	const float DebugScale = 0.4f;
 	UWorld* World = Agent.GetWorld();
 
@@ -70,7 +73,7 @@ SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
 	// -- area circle
 	DrawDebugCircle(Agent.GetWorld(), Start, 40, 50, FColor::Yellow, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-
+	*/
 	return Steering;
 }
 
