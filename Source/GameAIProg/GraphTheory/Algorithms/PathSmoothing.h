@@ -32,8 +32,12 @@ public:
 	        Node* NextNode = Path[i + 1];
 
 	    	int EdgeIdx = static_cast<NavGraphNode*>(CurrentNode)->GetEdgeIdx();
-	    	if (EdgeIdx == -1) continue;
-
+	    	if (EdgeIdx == -1)
+	    	{
+	    		Portals.push_back({ CurrentNode->GetPosition(), CurrentNode->GetPosition() });
+	    		continue;
+	    	}
+	    	
 	    	const auto& Edge = NavPoly.GetEdges()[EdgeIdx];
 	    	FVector2D P1(Edge.GetP1(NavPoly));
 	    	FVector2D P2(Edge.GetP2(NavPoly));
