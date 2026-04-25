@@ -11,9 +11,41 @@
 
 namespace GameAI::FSM
 {
-	class State;
 	class Transition;
-	class FSM; // contains FSM logic
+
+	class State
+	{
+	public:
+		virtual ~State() = default;
+
+		virtual void Enter() {};
+		virtual void Update(float DeltaTime) {};
+		virtual void Exit() {};
+		
+		std::vector<Transition> Transitions;
+		
+	};
+	
+	class Transition
+	{
+	public:
+		State* To;
+		std::function<bool()> Condition;
+	};
+	
+	class FSM // contains FSM logic
+	{
+	public:
+		void AddState(std::unique_ptr<State>&& NewState);
+		void AddTransition(State* From, State* To, std::function<bool()> Condition);
+
+		void Update(float DeltaTime);
+		void SetInitialState(State* State);
+
+	private:
+		std::vector<std::unique_ptr<State>> States;
+		State* CurrentState = nullptr;
+	};
 }
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -36,12 +68,14 @@ public:
 	
 	void AddState(std::unique_ptr<GameAI::FSM::State>&& NewState);
 	void AddTransition(GameAI::FSM::State* From, GameAI::FSM::State* To, std::function<bool()> EvalFunc) const;
-		
+
+	void SetInitialState(GameAI::FSM::State* State);
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 private:
-	//std::unique_ptr<GameAI::FSM::FSM> FSMInstance;
+	std::unique_ptr<GameAI::FSM::FSM> FSMInstance;
 	bool bIsRunning{false};
 };
