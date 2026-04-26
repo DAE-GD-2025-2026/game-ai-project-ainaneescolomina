@@ -24,5 +24,8 @@ protected:
 
 private:
 	UPROPERTY()
-	ASteeringAgent* Agent{nullptr}; // ref
+	ASteeringAgent* ThiefAgent{nullptr}; // ref
+	ASteeringAgent* GuardAgent{nullptr}; // ref
+	
+	ISteeringBehavior* ThiefSeekBehavior = nullptr;
 };

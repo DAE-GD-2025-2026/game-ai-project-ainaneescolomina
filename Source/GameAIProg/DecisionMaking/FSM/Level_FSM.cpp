@@ -6,7 +6,9 @@
 #include "FSMComponent.h"
 #include "DecisionMaking/GameAIController.h"
 #include "States/PatrolState.h"
-
+#include "States/ChaseState.h"
+#include "States/SearchState.h"
+#include "Movement/SteeringBehaviors/SteeringAgent.h"
 
 // Sets default values
 ALevel_FSM::ALevel_FSM()
@@ -20,21 +22,105 @@ void ALevel_FSM::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
+	GuardAgent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
 	FVector{0,0,90}, FRotator::ZeroRotator);
-	Agent->SetDebugRenderingEnabled(false);
+	GuardAgent->SetDebugRenderingEnabled(false);
 	
+	ThiefAgent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
+	FVector{0,0,90}, FRotator::ZeroRotator);
+	ThiefAgent->SetDebugRenderingEnabled(false);
+	
+	ThiefSeekBehavior = new Seek();
+	ThiefAgent->SetSteeringBehavior(ThiefSeekBehavior);
+
 	//TODO
-	if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
+	if (AGameAIController* AIController = Cast<AGameAIController>(GuardAgent->GetController()))
 	{
 		if (UFSMComponent* FSM = Cast<UFSMComponent>(AIController->GetBrainComponent()))
 		{
-			auto Idle = std::make_unique<GameAI::FSM::PatrolState>();
-			GameAI::FSM::State* IdlePtr = Idle.get();
-			FSM->AddState(std::move(Idle));
-			FSM->SetInitialState(IdlePtr);
+			// STATES
+			auto Patrol = std::make_unique<GameAI::FSM::PatrolState>();
+			auto Chase  = std::make_unique<GameAI::FSM::ChaseState>();
+			auto Search = std::make_unique<GameAI::FSM::SearchState>();
+
+			Patrol->SetAgent(GuardAgent);
+			Chase->SetAgent(GuardAgent);
+			Search->SetAgent(GuardAgent);
+
+			GameAI::FSM::State* PatrolPtr = Patrol.get();
+			GameAI::FSM::State* ChasePtr  = Chase.get();
+			GameAI::FSM::State* SearchPtr = Search.get();
+			GameAI::FSM::SearchState* SearchStatePtr = Search.get();
 			
-			AIController->RunFiniteStateMachine();
+			FSM->AddState(std::move(Patrol));
+			FSM->AddState(std::move(Chase));
+			FSM->AddState(std::move(Search));
+
+			FSM->SetInitialState(PatrolPtr);
+			
+			// TRANSITIONS
+			ASteeringAgent* Guard = GuardAgent;
+			ASteeringAgent* Thief = ThiefAgent;
+			UWorld* World = GetWorld();
+
+			FSM->AddTransition(PatrolPtr, ChasePtr, [Guard, Thief]()
+			{
+				if (!Guard || !Thief) return false;
+
+				float dist = FVector::Dist(
+					Guard->GetActorLocation(),
+					Thief->GetActorLocation()
+				);
+
+				return dist < 600.f;
+			});
+			
+			FSM->AddTransition(ChasePtr, SearchPtr, [Guard, Thief, SearchStatePtr]()
+			{
+				if (!IsValid(Guard) || !IsValid(Thief)) return false;
+
+				float dist = FVector::Dist(
+					Guard->GetActorLocation(),
+					Thief->GetActorLocation()
+				);
+
+				if (dist > 800.f)
+				{
+					FVector thiefPos = Thief->GetActorLocation();
+
+					SearchStatePtr->SetLastKnownPosition(
+						FVector2D(thiefPos.X, thiefPos.Y)
+					);
+
+					return true;
+				}
+
+				return false;
+			});
+			
+			FSM->AddTransition(SearchPtr, ChasePtr, [Guard, Thief]()
+			{
+				if (!IsValid(Guard) || !IsValid(Thief)) return false;
+
+				float dist = FVector::Dist(
+					Guard->GetActorLocation(),
+					Thief->GetActorLocation()
+				);
+
+				return dist < 600.f;
+			});
+			
+			FSM->AddTransition(SearchPtr, PatrolPtr, [SearchPtr]()
+			{
+				auto* Search = static_cast<GameAI::FSM::SearchState*>(SearchPtr);
+				if (!Search) return false;
+
+				float elapsed = Search->GetElapsedTime();
+
+				return elapsed > 5.f;
+			});
+			
+			FSM->StartLogic();
 		}
 	}
 }
@@ -43,5 +129,6 @@ void ALevel_FSM::BeginPlay()
 void ALevel_FSM::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	ThiefSeekBehavior->SetTarget(MouseTarget);
 }
 

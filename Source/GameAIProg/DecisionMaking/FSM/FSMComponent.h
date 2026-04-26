@@ -7,6 +7,7 @@
 
 #include "CoreMinimal.h"
 #include "BrainComponent.h"
+#include "Movement/SteeringBehaviors/SteeringAgent.h"
 #include "FSMComponent.generated.h"
 
 namespace GameAI::FSM
@@ -18,12 +19,17 @@ namespace GameAI::FSM
 	public:
 		virtual ~State() = default;
 
+		void SetAgent(ASteeringAgent* InAgent) { Agent = InAgent; }
+		
 		virtual void Enter() {};
 		virtual void Update(float DeltaTime) {};
 		virtual void Exit() {};
 		
 		std::vector<Transition> Transitions;
 		
+	protected:
+		ASteeringAgent* Agent = nullptr;
+		ISteeringBehavior* SeekBehavior = nullptr;
 	};
 	
 	class Transition
