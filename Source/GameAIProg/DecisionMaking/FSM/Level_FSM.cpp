@@ -4,6 +4,7 @@
 #include "Level_FSM.h"
 
 #include "FSMComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "DecisionMaking/GameAIController.h"
 #include "States/PatrolState.h"
 #include "States/ChaseState.h"
@@ -45,6 +46,7 @@ void ALevel_FSM::BeginPlay()
 
 			Patrol->SetAgent(GuardAgent);
 			Chase->SetAgent(GuardAgent);
+			Chase->SetTarget(ThiefAgent);
 			Search->SetAgent(GuardAgent);
 
 			GameAI::FSM::State* PatrolPtr = Patrol.get();
@@ -58,7 +60,8 @@ void ALevel_FSM::BeginPlay()
 
 			FSM->SetInitialState(PatrolPtr);
 			
-			// TRANSITIONS
+			// TRANSITIONS FSM
+			/*
 			ASteeringAgent* Guard = GuardAgent;
 			ASteeringAgent* Thief = ThiefAgent;
 			UWorld* World = GetWorld();
@@ -119,8 +122,62 @@ void ALevel_FSM::BeginPlay()
 
 				return elapsed > 5.f;
 			});
+			*/
 			
-			FSM->StartLogic();
+			// TRANSITIONS Behavior Tree
+			ASteeringAgent* Guard = GuardAgent;
+			ASteeringAgent* Thief = ThiefAgent;
+
+			FSM->AddTransition(PatrolPtr, ChasePtr, [AIController]()
+			{
+				if (!AIController) return false;
+
+				auto* BB = AIController->GetBlackboardComponent();
+				return BB && BB->GetValueAsBool("CanSeeTarget");
+			});
+			
+			FSM->AddTransition(ChasePtr, SearchPtr, [AIController, SearchStatePtr]()
+			{
+				if (!AIController) return false;
+
+				auto* BB = AIController->GetBlackboardComponent();
+				if (!BB) return false;
+
+				bool canSee = BB->GetValueAsBool("CanSeeTarget");
+
+				if (!canSee)
+				{
+					FVector lastPos = BB->GetValueAsVector("LastKnownPosition");
+
+					SearchStatePtr->SetLastKnownPosition(
+						FVector2D(lastPos.X, lastPos.Y)
+					);
+
+					return true;
+				}
+
+				return false;
+			});
+			
+			FSM->AddTransition(SearchPtr, ChasePtr, [AIController]()
+			{
+				if (!AIController) return false;
+
+				auto* BB = AIController->GetBlackboardComponent();
+				return BB && BB->GetValueAsBool("CanSeeTarget");
+			});
+			
+			FSM->AddTransition(SearchPtr, PatrolPtr, [SearchPtr]()
+			{
+				auto* Search = static_cast<GameAI::FSM::SearchState*>(SearchPtr);
+				if (!Search) return false;
+
+				float elapsed = Search->GetElapsedTime();
+
+				return elapsed > 5.f;
+			});
+			
+			//FSM->StartLogic();
 		}
 	}
 }

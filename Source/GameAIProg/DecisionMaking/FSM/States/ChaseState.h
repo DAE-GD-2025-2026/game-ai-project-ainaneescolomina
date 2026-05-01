@@ -6,24 +6,34 @@ namespace GameAI::FSM
 	class ChaseState : public State
 	{
 	public:
-		virtual void Enter() override
+		void Enter() override
 		{
-			if (!Agent) return;
-			if (!SeekBehavior) SeekBehavior = new Seek();
-			
+			if (!Agent || !TargetAgent) return;
+			if (!SeekBehavior)
+				SeekBehavior = std::make_unique<Seek>();
+
 			FTargetData target;
-			target.Position = Agent->GetPosition();
-			
+			target.Position = FVector2D(
+				TargetAgent->GetActorLocation().X,
+				TargetAgent->GetActorLocation().Y
+			);
+
 			SeekBehavior->SetTarget(target);
-			Agent->SetSteeringBehavior(SeekBehavior);
-			
+			Agent->SetSteeringBehavior(SeekBehavior.get());
+
 			UE_LOG(LogTemp, Warning, TEXT("Enter Chase"));
 		}
 
-		virtual void Update(float DeltaTime) override
+		void Update(float DeltaTime) override
 		{
+			if (!TargetAgent) return;
+
 			FTargetData target;
-			target.Position = Agent->GetPosition();
+			target.Position = FVector2D(
+				TargetAgent->GetActorLocation().X,
+				TargetAgent->GetActorLocation().Y
+			);
+
 			SeekBehavior->SetTarget(target);
 		}
 		
@@ -31,5 +41,13 @@ namespace GameAI::FSM
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Exit Chase"));
 		}
+		
+		void SetTarget(ASteeringAgent* InTarget)
+		{
+			TargetAgent = InTarget;
+		}
+		
+	private:
+		ASteeringAgent* TargetAgent = nullptr;
 	};
 }

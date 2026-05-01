@@ -29,7 +29,7 @@ namespace GameAI::FSM
 		
 	protected:
 		ASteeringAgent* Agent = nullptr;
-		ISteeringBehavior* SeekBehavior = nullptr;
+		std::unique_ptr<ISteeringBehavior> SeekBehavior = nullptr;
 	};
 	
 	class Transition

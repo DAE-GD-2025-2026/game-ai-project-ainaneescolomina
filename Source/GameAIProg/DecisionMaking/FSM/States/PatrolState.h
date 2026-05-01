@@ -10,7 +10,8 @@ namespace GameAI::FSM
 		void Enter() override
 		{
 			if (!Agent) return;
-			if (!SeekBehavior) SeekBehavior = new Seek();
+			if (!SeekBehavior)
+				SeekBehavior = std::make_unique<Seek>();
 			if (PatrolPoints.empty())
 			{
 				PatrolPoints = {
@@ -28,7 +29,7 @@ namespace GameAI::FSM
 			);
 			
 			SeekBehavior->SetTarget(target);
-			Agent->SetSteeringBehavior(SeekBehavior);
+			Agent->SetSteeringBehavior(SeekBehavior.get());
 			
 			UE_LOG(LogTemp, Warning, TEXT("Enter Patrol"));
 		}

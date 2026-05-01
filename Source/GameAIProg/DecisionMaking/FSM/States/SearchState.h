@@ -9,13 +9,14 @@ namespace GameAI::FSM
 		virtual void Enter() override
 		{
 			if (!Agent) return;
-			if (!SeekBehavior) SeekBehavior = new Seek();
+			if (!SeekBehavior)
+				SeekBehavior = std::make_unique<Seek>();
 			
 			FTargetData target;
 			target.Position = LastKnownPosition;
 
 			SeekBehavior->SetTarget(target);
-			Agent->SetSteeringBehavior(SeekBehavior);
+			Agent->SetSteeringBehavior(SeekBehavior.get());
 			
 			StartSearchTime = Agent->GetWorld()->GetTimeSeconds();
 			
@@ -24,7 +25,15 @@ namespace GameAI::FSM
 
 		virtual void Update(float DeltaTime) override
 		{
-			// move actor
+			float dist = FVector::Dist(
+				Agent->GetActorLocation(),
+				FVector(LastKnownPosition.X, LastKnownPosition.Y, 0)
+			);
+
+			if (dist < 50.f)
+			{
+				// change state?
+			}
 		}
 		
 		void Exit() override
