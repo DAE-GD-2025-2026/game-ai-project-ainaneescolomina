@@ -3,6 +3,7 @@
 
 #include "Level_GraphTheory.h"
 
+#include "Algorithms/ArticulationPoints.h"
 #include "Algorithms/EulerianPath.h"
 #include "Shared/GameAISpectator.h"
 
@@ -22,6 +23,11 @@ void ALevel_GraphTheory::BeginPlay()
 	
 	// Add World Ref to Renderer
 	Renderer = GraphRenderer{GetWorld()};
+	GraphRenderOptions options;
+	options.bDrawHighlightedNodes = true; 
+	options.bDrawNodes = true;
+	options.bDrawConnections = true;
+	Renderer.SetRenderOptions(options);
 	
 	// Add the graph editor to our player
 	if (PlayerController = Cast<APlayerController>(GetWorld()->GetFirstLocalPlayerFromController()->PlayerController); 
@@ -118,13 +124,23 @@ void ALevel_GraphTheory::Tick(float DeltaTime)
 	}
 #pragma endregion UI
 	
-	Renderer.RenderGraph(Graph);
-	
 	// TODO Check if the graph has updated
 	if (PlayerGraphEditor->HasGraphUpdated() || firstFrame)
 	{
-		// TODO if so, run the EulerianPath algorithm
 		if (Graph.GetNodeCount() == 0) return;
+		
+		// EXTRA ASSIGMENT search for articulation points
+		ArticulationPoints articulationPointsSearch{&Graph};
+		std::vector<int> articulationPointsIds = articulationPointsSearch.FindArticulationPointIds();
+		std::vector<std::pair<int, FColor>> highlights;
+		for (int id : articulationPointsIds)
+		{
+			highlights.push_back({ id, FColor::Red });
+		}
+		
+		Renderer.SetHighlightedNodes(highlights);
+		
+		// TODO if so, run the EulerianPath algorithm
 		EulerianPath eulerian{&Graph};
 		Eulerianity eulerianity{};
 		auto path = eulerian.FindPath(eulerianity);
@@ -138,6 +154,7 @@ void ALevel_GraphTheory::Tick(float DeltaTime)
 		firstFrame = false;
 	}
 	
+	Renderer.RenderGraph(Graph);
 }
 
 void ALevel_GraphTheory::UpdateAgentPath(std::vector<Node*> const& Trail)
