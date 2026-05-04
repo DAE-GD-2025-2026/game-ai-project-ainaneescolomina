@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -17,6 +19,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI|FSM")
 	TObjectPtr<UBlackboardData> FSMBlackboardAsset; 
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	TArray<FVector> PatrolPoints;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	int32 PatrolIndex = 0;
+	
 	// Sets default values for this actor's properties
 	AGameAIController();
 	// Called every frame
@@ -27,6 +35,8 @@ public:
 	// AI Perception
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
+	virtual void OnPossess(APawn* InPawn) override;
 	
 protected:
 	// Called when the game starts or when spawned

@@ -11,7 +11,7 @@ AGameAIController::AGameAIController()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	BrainComponent = CreateDefaultSubobject<UFSMComponent>(TEXT("FSMComponent"));
+	//BrainComponent = CreateDefaultSubobject<UFSMComponent>(TEXT("FSMComponent"));
 	
 	// AI Perception
 	PerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComp"));
@@ -75,6 +75,16 @@ void AGameAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 
 		FVector lastPos = Stimulus.StimulusLocation;
 		Blackboard->SetValueAsVector("LastKnownPosition", lastPos);
+	}
+}
+
+void AGameAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (BehaviorTree)
+	{
+		RunBehaviorTree(BehaviorTree);
 	}
 }
 
