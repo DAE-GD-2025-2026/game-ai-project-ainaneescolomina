@@ -25,7 +25,7 @@ namespace GameAI
                 const int id = node->GetId();
                 if (discoveryTime[id] == -1)
                 {
-                    DFS(id, -1, currentTime, discoveryTime, lowestReachableTime, isArticulationPoint);
+                    ArticulationDFS(id, -1, currentTime, discoveryTime, lowestReachableTime, isArticulationPoint);
                 }
             }
 
@@ -39,9 +39,10 @@ namespace GameAI
         }
 
     private:
-        void DFS(int currentNodeId, int parentNodeId, int& timer, std::vector<int>& discoveryTime, std::vector<int>& lowestReachableTime, std::vector<bool>& isArticulationPoint)
+        void ArticulationDFS(int currentNodeId, int parentNodeId, int& timer, std::vector<int>& discoveryTime, std::vector<int>& lowestReachableTime, std::vector<bool>& isArticulationPoint)
         {
-            discoveryTime[currentNodeId] = lowestReachableTime[currentNodeId] = ++timer;
+            discoveryTime[currentNodeId] = ++timer;
+            lowestReachableTime[currentNodeId] = timer;
             int children = 0;
 
             auto connections = m_pGraph->FindConnectionsFrom(currentNodeId);
@@ -57,18 +58,18 @@ namespace GameAI
                 else
                 {
                     children++;
-                    DFS(neighborNodeId , currentNodeId, timer, discoveryTime, lowestReachableTime, isArticulationPoint);
+                    ArticulationDFS(neighborNodeId , currentNodeId, timer, discoveryTime, lowestReachableTime, isArticulationPoint);
                     lowestReachableTime[currentNodeId] = std::min(lowestReachableTime[currentNodeId], lowestReachableTime[neighborNodeId ]);
-
-                    // Root condition
-                    if (parentNodeId == -1 && children > 1)
-                        isArticulationPoint[currentNodeId] = true;
                     
                     // Non-Root condition
                     if (parentNodeId != -1 && lowestReachableTime[neighborNodeId ] >= discoveryTime[currentNodeId])
                         isArticulationPoint[currentNodeId] = true;
                 }
             }
+            
+            // Root condition
+            if (parentNodeId == -1 && children > 1)
+                isArticulationPoint[currentNodeId] = true;
         }
 
         Graph* m_pGraph;

@@ -132,13 +132,13 @@ void ALevel_GraphTheory::Tick(float DeltaTime)
 		// EXTRA ASSIGMENT search for articulation points
 		ArticulationPoints articulationPointsSearch{&Graph};
 		std::vector<int> articulationPointsIds = articulationPointsSearch.FindArticulationPointIds();
-		std::vector<std::pair<int, FColor>> highlights;
+		std::vector<std::pair<int, FColor>> NodesHighlight;
 		for (int id : articulationPointsIds)
 		{
-			highlights.push_back({ id, FColor::Red });
+			NodesHighlight.push_back({ id, FColor::Red });
 		}
 		
-		Renderer.SetHighlightedNodes(highlights);
+		Renderer.SetHighlightedNodes(NodesHighlight);
 		
 		// TODO if so, run the EulerianPath algorithm
 		EulerianPath eulerian{&Graph};
